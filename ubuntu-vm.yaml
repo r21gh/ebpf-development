@@ -1,0 +1,22 @@
+images:
+- location: "https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-amd64.img"
+  arch: "x86_64"
+- location: "https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-arm64.img"
+  arch: "aarch64"
+
+mounts:
+- location: "/Users/rezaghanbari/development/ebpf"
+  writable: true
+provision:
+- mode: system
+  script: |
+    #!/bin/bash
+    apt-get update
+    apt-get install -y bpfcc-tools linux-headers-$(uname -r)
+    apt-get install -y build-essential pkg-config libssl-dev
+    snap install go --classic
+    sudo apt install llvm -y
+    sudo apt install clang -y
+    sudo ln -s /usr/include/asm-generic /usr/include/asm
+    sudo apt install libbpf-dev -y
+    
