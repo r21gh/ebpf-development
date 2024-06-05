@@ -7,6 +7,8 @@ images:
 mounts:
 - location: "/Users/rezaghanbari/development/ebpf"
   writable: true
+- location: "/Users/rezaghanbari/development/ebpfbench"
+- writable: true
 provision:
 - mode: system
   script: |
@@ -19,4 +21,5 @@ provision:
     sudo apt install clang -y
     sudo ln -s /usr/include/asm-generic /usr/include/asm
     sudo apt install libbpf-dev -y
+    sudo apt install linux-tools-6.8.0-31-generic
     
