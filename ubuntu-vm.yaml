@@ -1,25 +1,70 @@
 images:
-- location: "https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-amd64.img"
-  arch: "x86_64"
-- location: "https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-arm64.img"
-  arch: "aarch64"
+  - location: "https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-amd64.img"
+    arch: "x86_64"
+  - location: "https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-arm64.img"
+    arch: "aarch64"
 
 mounts:
   - location: "~"
     writable: true
-    mount-type: 9p
+
 provision:
-- mode: system
-  script: |
-    #!/bin/bash
-    apt-get update
-    apt-get install -y bpfcc-tools linux-headers-$(uname -r)
-    apt-get install -y build-essential pkg-config libssl-dev git
-    snap install go --classic
-    sudo apt install llvm -y
-    sudo apt install clang -y
-    sudo ln -s /usr/include/asm-generic /usr/include/asm
-    sudo apt install libbpf-dev -y
-    sudo apt install linux-tools-6.8.0-31-generic
-    git clone --recurse-submodules "https://github.com/libbpf/bpftool.git"
-    cd bpftool && cd src && make install
+  - mode: system
+    script: |
+      #!/bin/bash
+      set -e
+      
+      # Update and install required packages
+      sudo apt-get update
+      sudo apt-get install -y bpfcc-tools linux-headers-$(uname -r)
+      sudo apt-get install -y build-essential pkg-config libssl-dev git
+      sudo snap install go --classic
+      sudo apt install -y llvm clang libbpf-dev graphviz
+      sudo ln -s /usr/include/asm-generic /usr/include/asm
+      
+      # Install kernel tools
+      sudo apt install -y linux-tools-$(uname -r)
+      
+      # Clone and install bpftool
+      git clone --recurse-submodules "https://github.com/libbpf/bpftool.git"
+      cd bpftool/src
+      sudo make install
+      cd ../..
+      
+      # Add /usr/sbin to PATH in the user's shell configuration file
+      user_shell=$(basename "$SHELL")
+      
+      # Determine the correct shell config file
+      case "$user_shell" in
+        bash)
+          config_file="$HOME/.bashrc"
+          ;;
+        zsh)
+          config_file="$HOME/.zshrc"
+          ;;
+        ksh)
+          config_file="$HOME/.kshrc"
+          ;;
+        *)
+          echo "Unsupported shell: $user_shell"
+          exit 1
+          ;;
+      esac
+      
+      # Append export statement to the shell's config file if not already present
+      if ! grep -q 'export PATH=/usr/sbin:$PATH' "$config_file"; then
+        echo 'export PATH=/usr/sbin:$PATH' >> "$config_file"
+        echo "Added export statement to $config_file"
+      else
+        echo "Export statement already exists in $config_file"
+      fi
+      
+      # Install Rust and additional tools
+      curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
+      source "$HOME/.cargo/env"
+      rustup default stable
+      rustup toolchain add nightly
+      rustup component add rust-src --toolchain nightly
+      cargo install cargo-generate
+      cargo install bpf-linker
+      cargo install bindgen-cli
