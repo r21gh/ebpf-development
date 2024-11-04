@@ -1,0 +1,49 @@
+version: '3'
+
+tasks:
+  default:
+    desc: "Show available commands"
+    cmds:
+      - task --list
+
+  create:
+    desc: "Create a Lima VM instance"
+    cmds:
+      - |
+        read -p "Enter VM name: " vm_name
+        limactl create --name="$vm_name" ./ubuntu-vm.yaml
+
+  stop:
+    desc: "Stop the Lima VM instance"
+    cmds:
+      - |
+        read -p "Enter VM name: " vm_name
+        limactl stop "$vm_name"
+
+  start:
+    desc: "Start the Lima VM instance"
+    cmds:
+      - |
+        read -p "Enter VM name: " vm_name
+        limactl start "$vm_name"
+
+  delete:
+    desc: "Delete the Lima VM instance"
+    cmds:
+      - |
+        read -p "Enter VM name: " vm_name
+        limactl delete "$vm_name"
+
+  status:
+    desc: "Show the status of the Lima VM instance"
+    cmds:
+      - |
+        read -p "Enter VM name: " vm_name
+        limactl status "$vm_name"
+
+  shell:
+    desc: "Open an interactive shell in the Lima VM instance"
+    cmds:
+      - |
+        read -p "Enter VM name: " vm_name
+        limactl shell "$vm_name"
